@@ -1,5 +1,5 @@
 # Space efficient, bit-packed singly linked list
-The `compact_linked_list` (CLL) data structure is a variation of a singly linked list. It resembles `std::forward_list` with its basic API (insertions, deletions, iteration), but differs in a fay ways:
+The `compact_linked_list` (CLL) data structure is a variation of a singly linked list. It resembles `std::forward_list` with its basic API (insertions, deletions, iteration), but differs in a faw ways:
  - CLL can only store unsigned integral values between 0 and a specified (by a template parameter) value (up to `2^64-1`.
  - CLL has a limit on the number of elements, which is supplied as a template parameter.
  - Knowing the value and size cap, it allocates all storage upfront, therefore no memory allocations/deallocations are performed during insertions and deletions.
@@ -7,9 +7,10 @@ The `compact_linked_list` (CLL) data structure is a variation of a singly linked
 
 ## Current features:
  - Data can be accessed via iterators, same as `std::forward_list`.
- - Dereferencing an iterator does not return a (const) reference to the value, but rather a proxy object that can be used to modify/get the value. It ss easy to work with due to implicit conversions. Conceptually the same things as in `std::vector<bool>`.
+ - Dereferencing an iterator does not return a (const) reference to the value, but rather a proxy object that can be used to modify/get the value. It is easy to work with due to implicit conversions. Conceptually the same things as in `std::vector<bool>`.
  - Pointers are implemented as indices, that can be easily converted into bit offset.
- - Requires less memory
+ - Requires less memory.
+ - All operations (including initialization) are `O(1)`.
 
 ## Memory use
 One of the main features of this implementation is the efficient use of memory. For a regular `std::forward_list`, allocating a new node on the heap has a cost, that consists of several things:
