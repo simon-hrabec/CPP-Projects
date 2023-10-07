@@ -1,5 +1,5 @@
 # Space efficient, bit-packed singly linked list
-The `compact_linked_list` (CLL) data structure is a variation of a singly linked list. It resembles `std::forward_list` with its basic API (insertions, deletions, iteration), but differs in a faw ways:
+The `compact_linked_list` (CLL) data structure is a variation of a singly linked list. It resembles `std::forward_list` with its basic API (insertions, deletions, iteration), but differs in a few ways:
  - CLL can only store unsigned integral values between 0 and a specified (by a template parameter) value (up to `2^64-1`.
  - CLL has a limit on the number of elements, which is supplied as a template parameter.
  - Knowing the value and size cap, it allocates all storage upfront, therefore no memory allocations/deallocations are performed during insertions and deletions.
