@@ -3,28 +3,27 @@
 template <typename T>
 class shared_pointer {
 private:
-	struct controll_block {
-		controll_block() : reference_count(1) {
-		}
+	struct control_block {
+		control_block() = default;
 
-		std::atomic<std::size_t> reference_count;
+		std::atomic<std::size_t> reference_count = 1;
 	};
 
 public:
 	shared_pointer() noexcept : block(nullptr), data(nullptr) {
 	}
 
-	shared_pointer(T* data) : block(new controll_block()), data(data) {
+	shared_pointer(T *data) : block(new control_block()), data(data) {
 	}
 
 	shared_pointer(const shared_pointer& other) noexcept {
 		block = other.block;
-		block->reference_count++;
+		block->reference_count.fetch_add(1);
 		data = other.data;
 	}
 
 	~shared_pointer() {
-		release_ownership();
+		check_and_release_ownership();
 	}
 
 	T& operator*() const noexcept {
@@ -48,34 +47,35 @@ public:
 	}
 
 	void reset() noexcept {
+		check_and_release_ownership();
 		block = nullptr;
 		data = nullptr;
 	}
 
-	void reset(T *new_data) {
-		release_ownership();
-		block = new controll_block();
+	void reset(T* new_data) {
+		check_and_release_ownership();
+		block = new control_block();
 		data = new_data;
 	}
 
-	void swap(shared_pointer &other) noexcept {
+	void swap(shared_pointer& other) noexcept {
 		std::swap(block, other.block);
 		std::swap(data, other.data);
 	}
 
 private:
-	void release_ownership() {
-		if (block->reference_count.fetch_sub(1) == 1) {
+	void check_and_release_ownership() {
+		if (block != nullptr && block->reference_count.fetch_sub(1) == 1) {
 			delete block;
 			delete data;
 		}
 	}
 
-	controll_block *block;
-	T *data;
+	control_block* block;
+	T* data;
 };
 
 template <typename T, typename... Args>
-shared_pointer<T> make_shared_pointer(Args&&... args) {
+inline shared_pointer<T> make_shared_pointer(Args&&... args) {
 	return shared_pointer<T>(new T(std::forward<Args>(args)...));
 }
