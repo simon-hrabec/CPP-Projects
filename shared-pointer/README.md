@@ -9,3 +9,6 @@ This version is the absolute minimal one. It has a constructor that allocates th
 
 ### Version 2 - Additional methods and `make_shared_pointer`
 This version adds the option to have an empty shared pointer (using the `reset` method). It adds several other methods (`swap`, `operator bool`, `use_count`, empty constructor) and adds the function `make_shared_pointer` (mirroring `make_shared`), which can accept parameters for a constructor of `T` and handle the object construction (via parameter forwarding). Note that this function should normally allocate the object and control block together (to save 1 allocation and improve space locality), but this version does not do it - it will be addressed in future versions. However, the interface of the method will not change.
+
+### Version 3 - Assignment operator, move assignment, move constructor
+The assignment operator is always a bit more complicated than a copy constructor because we need to deal with the already existing object and the possibility of self-assignment. Moreover, a shared pointer can be empty. C++11 also introduced move semantics, hence we should cover them as well. All of those are just a bunch of ifs, checking the state properly, reassigning the data/block pointer, possibly decreasing the counter, and deallocating the block if necessary.
