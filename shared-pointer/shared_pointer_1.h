@@ -6,7 +6,7 @@ private:
     struct control_block {
         control_block() = default;
 
-        std::atomic<std::size_t> reference_count = 1;
+        std::atomic<std::size_t> reference_count{1};
     };
 
 public:

@@ -9,7 +9,7 @@ private:
     public:
         virtual ~control_block() = default;
 
-        std::atomic<std::size_t> reference_count = 1;
+        std::atomic<std::size_t> reference_count{1};
     };
 
     struct control_block_standalone : public control_block {
