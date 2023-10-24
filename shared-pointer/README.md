@@ -15,3 +15,17 @@ The assignment operator is always a bit more complicated than a copy constructor
 
 ### Version 4 - `make_shared_pointer` with a single allocation
 When creating the shared pointer with the `make_shared_pointer` helper function, instead of having two separate allocations - one for the control block and one for the object - we want to have only 1 such call and allocate both simultaneously. We therefore need to create another version of the control block that, besides the reference counter, will also contain the object itself. However, both shared pointers (one created with an object pointer and the second created with the `make_shared_pointer` function) are of the same type and are interoperable. To allow for such flexibility, we create 2 specializations of the block class and let them do the deallocations in their (virtual) destructor. We then have the `make_shared_pointer` to forward the arguments to the constructor of the `control_block_with_object`, which then creates the object.
+
+### Version 5 - Aliasing constructor, comparisons and `get`
+The standard shared pointer also has an "aliasing constructor". It allows to make a distinction between what the pointer is pointing to and the managed data. You can have a managed `struct` and the pointer pointing only to its member variable. This is fairly easy to achieve with another constructor. However, a problem occurs because now we need to mix together different instantiations of `shared_poointer`. So far the control block could be a nested class (to hide it as an implementation detail), but now we have an issue, because `shared_pointer<T1>::control_block` and `shared_pointer<T2>::control_block` are two different (and hence incompatible types). Therefore it is must be declared as a standalone class (see [SO](https://stackoverflow.com/questions/77342783/nested-class-of-a-template-class-interoperability-and-visibility/77343089#77343089)).
+Implementation of comparison is fairly simple since C++20 and the introduction of the spaceship operator `<=>`. We could also simply support a comparison between different pointer types with the following code:
+
+    template<std::three_way_comparable_with<T> U>
+    std::compare_three_way_result_t<T, U> operator<=>(const shared_pointer<U>& other) const noexcept {
+        if (has_value() && other.has_value()) {
+            return *data <=> *other.data;
+        }
+        return (has_value()) <=> (other.has_value());
+    }
+
+However, the `std::shared_ptr` does not allow for mixing pointer types in comparisons, therefore I decided to implement a more restricted version where only pointers of the same type can be compared. Finally, the `get()` method is the same as `operator->`.
