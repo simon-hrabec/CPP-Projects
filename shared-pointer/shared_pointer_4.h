@@ -93,15 +93,15 @@ public:
     }
 
     long use_count() const noexcept {
-        if (block == nullptr) {
-            return 0;
+        if (has_value()) {
+            return block->reference_count;
         } else {
-            return block->reference_count;  
+            return 0;
         }
     }
 
     explicit operator bool() const noexcept {
-        return data != nullptr;
+        return has_value();
     }
 
     void reset() noexcept {
@@ -125,8 +125,12 @@ public:
     friend shared_pointer<U> make_shared_pointer(Args&&... args);
 
 private:
+    bool has_value() const noexcept {
+        return block != nullptr;
+    }
+
     void check_and_release_ownership() {
-        if (block != nullptr && block->reference_count.fetch_sub(1) == 1) {
+        if (has_value() && block->reference_count.fetch_sub(1) == 1) {
             delete block;
         }
     }
