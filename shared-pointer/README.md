@@ -29,3 +29,8 @@ Implementation of comparison is fairly simple since C++20 and the introduction o
     }
 
 However, the `std::shared_ptr` does not allow for mixing pointer types in comparisons, therefore I decided to implement a more restricted version where only pointers of the same type can be compared. Finally, the `get()` method is the same as `operator->`.
+
+## Aditional links and resources
+ - Spaceship operator: [CppCon 2019: Jonathan Müller "Using C++20's Three-way Comparison <=>"](https://www.youtube.com/watch?v=8jNXy3K2Wpk)
+ - CppCon "Back to basics" videos on smart pointers: [Arthur O'Dwye 2019](https://www.youtube.com/watch?v=xGDLkt-jBJ4), [David Olsen 2022](https://www.youtube.com/watch?v=YokY6HzLkXs)
+ 
