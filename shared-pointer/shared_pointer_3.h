@@ -16,7 +16,7 @@ public:
     shared_pointer(std::nullptr_t) noexcept : block(nullptr), data(nullptr) {
     }
 
-    shared_pointer(T* data) : block(new control_block()), data(data) {
+    explicit shared_pointer(T* data) : block(new control_block()), data(data) {
     }
 
     shared_pointer(const shared_pointer& other) noexcept {
