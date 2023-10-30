@@ -74,6 +74,11 @@ public:
         return *this;
     }
 
+    shared_pointer& operator=(std::nullptr_t) noexcept {
+        reset();
+        return *this;
+    }
+
     shared_pointer& operator=(shared_pointer&& other) noexcept {
         if (block != other.block) {
             check_and_release_ownership();
