@@ -1,3 +1,4 @@
+
 # Shared Pointer
 If I need to have shared ownership in my C++ code, I can use a shared pointer. C++11 introduced `std::shared_ptr<T>` smart pointer, which is now part of the standard library. Therefore, there is no need to reimplement it (reinvent the wheel). Unless... you want to have some fun or see it as a learning experience and entertaining exercise. On this page I will show several iterations of shared pointer implementation from the most basic one to (ideally/eventually) a full version that supports all the features like the standard one. I intend to have this page also as a learning resource. 
 
@@ -29,6 +30,16 @@ Implementation of comparison is fairly simple since C++20 and the introduction o
     }
 
 However, the `std::shared_ptr` does not allow for mixing pointer types in comparisons, therefore I decided to implement a more restricted version where only pointers of the same type can be compared. Finally, the `get()` method is the same as `operator->`.
+
+### Version 6 - Custom deleter
+Both `std::shared_ptr`  and `std::unique_ptr` have the option to create the owned resource also with a custom deleter - a user-provided code that will execute at the end of the lifetime of the object instead of the default `delete data;`. However, the difference between those two smart pointers is that the custom deleter of `std::unique_ptr` is part of the type, whereas for `std::shared_ptr` the type is erased (the deleter is part of the control block). All we need is to add additional operator overload that will accept the deleter - a functor. Something that allows for a call to the `operator()`. A default deleter can therefore look something like this:
+
+    template <typename T>
+    struct default_deleter {
+        void operator()(T const* data_pointer) {
+            delete data_pointer;
+        }
+    };
 
 ## Aditional links and resources
  - Spaceship operator: [CppCon 2019: Jonathan Müller "Using C++20's Three-way Comparison <=>"](https://www.youtube.com/watch?v=8jNXy3K2Wpk)
