@@ -46,6 +46,9 @@ public:
     shared_pointer() noexcept : block(nullptr), data(nullptr) {
     }
 
+    shared_pointer(std::nullptr_t) noexcept : block(nullptr), data(nullptr) {
+    }
+
     shared_pointer(T* data) : block(new control_block_standalone(data)), data(data) {
     }
 
