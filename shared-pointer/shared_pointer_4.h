@@ -137,7 +137,7 @@ private:
         return block != nullptr;
     }
 
-    void check_and_release_ownership() {
+    void check_and_release_ownership() noexcept {
         if (has_value() && block->reference_count.fetch_sub(1) == 1) {
             delete block;
         }

@@ -1,13 +1,6 @@
 #include <atomic>
 #include <compare>
 
-template <typename T>
-struct default_deleter {
-    void operator()(T const* data_pointer) {
-        delete data_pointer;
-    }
-};
-
 struct control_block {
 protected:
     control_block() = default;
@@ -17,16 +10,15 @@ public:
     std::atomic<std::size_t> reference_count{1};
 };
 
-template<typename T, typename Deleter = default_deleter<T>>
+template<typename T>
 struct control_block_standalone : public control_block {
-    control_block_standalone(T* data, Deleter deleter) noexcept : deleter(deleter), data(data) {
+    control_block_standalone(T* data) noexcept : data(data) {
     }
 
     virtual ~control_block_standalone(){
-        deleter(data);
+        delete data;
     };
 
-    Deleter deleter;
     T* data;
 };
 
@@ -44,9 +36,8 @@ struct control_block_with_object : public control_block {
 template <typename T>
 class shared_pointer {
 private:
-    using compare_result = std::compare_three_way_result_t<T>;
-
     template <typename T2> friend class shared_pointer;
+    template <typename T2> friend class std::hash;
     shared_pointer(control_block_with_object<T>* block) noexcept : block(block), data(&block->data) {
     }
 
@@ -58,10 +49,6 @@ public:
     }
 
     explicit shared_pointer(T* data) : block(new control_block_standalone(data)), data(data) {
-    }
-
-    template<typename Deleter>
-    shared_pointer(T* data, Deleter deleter) : block(new control_block_standalone(data, deleter)), data(data) {
     }
 
     shared_pointer(const shared_pointer& other) noexcept : block(other.block), data(other.data) {
@@ -156,18 +143,12 @@ public:
         std::swap(data, other.data);
     }
 
-    compare_result operator<=>(const shared_pointer& other) const noexcept {
-        if (has_value() && other.has_value()) {
-            return *data <=> *other.data;
-        }
-        return (has_value()) <=> (other.has_value());
+    std::strong_ordering operator<=>(const shared_pointer& other) const noexcept {
+        return data <=> other.data;
     }
 
-    compare_result operator<=>(std::nullptr_t) const noexcept {
-        if (has_value()) {
-            return compare_result::greater;
-        }
-        return compare_result::equal;
+    std::strong_ordering operator<=>(std::nullptr_t) const noexcept {
+        return data <=> nullptr;
     }
 
     bool operator==(const shared_pointer& other) const noexcept {
@@ -200,3 +181,10 @@ template <typename T, typename... Args>
 inline shared_pointer<T> make_shared_pointer(Args&&... args) {
     return shared_pointer(new control_block_with_object<T>(std::forward<Args>(args)...));
 }
+
+template<typename T>
+struct std::hash<shared_pointer<T>> {
+    std::size_t operator()(const shared_pointer<T>& other) const noexcept {
+        return std::hash<T*>{}(other.data);
+    }
+};
