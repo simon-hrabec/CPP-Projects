@@ -2,9 +2,22 @@
 #include <compare>
 
 template <typename T>
+std::remove_extent_t<T>* get_address(T& data) {
+    if constexpr (std::is_array_v<T>) {
+        return data;
+    } else {
+        return &data;
+    }
+}
+
+template <typename T>
 struct default_deleter {
-    void operator()(T const* data_pointer) {
-        delete data_pointer;
+    void operator()(std::remove_extent_t<T> const* data_pointer) {
+        if constexpr(std::is_array_v<T>) {
+            delete [] data_pointer;
+        } else {
+            delete data_pointer;    
+        }
     }
 };
 
@@ -19,7 +32,8 @@ public:
 
 template<typename T, typename Deleter = default_deleter<T>>
 struct control_block_standalone : public control_block {
-    control_block_standalone(T* data, Deleter deleter = Deleter{}) noexcept : deleter(deleter), data(data) {
+    using element_type = std::remove_extent_t<T>;
+    control_block_standalone(element_type* data, Deleter deleter = Deleter{}) noexcept : deleter(deleter), data(data) {
     }
 
     virtual ~control_block_standalone(){
@@ -27,7 +41,7 @@ struct control_block_standalone : public control_block {
     };
 
     Deleter deleter;
-    T* data;
+    element_type* data;
 };
 
 template<typename T>
@@ -46,21 +60,22 @@ class shared_pointer {
 private:
     template <typename T2> friend class shared_pointer;
     template <typename T2> friend class std::hash;
-    shared_pointer(control_block_with_object<T>* block) noexcept : block(block), data(&block->data) {
+    shared_pointer(control_block_with_object<T>* block) noexcept : block(block), data(get_address(block->data)) {
     }
 
 public:
+    using element_type = std::remove_extent_t<T>;
     shared_pointer() noexcept : block(nullptr), data(nullptr) {
     }
 
     shared_pointer(std::nullptr_t) noexcept : block(nullptr), data(nullptr) {
     }
 
-    explicit shared_pointer(T* data) : block(new control_block_standalone(data)), data(data) {
+    explicit shared_pointer(element_type* data) : block(new control_block_standalone<T>(data)), data(data) {
     }
 
     template<typename Deleter>
-    shared_pointer(T* data, Deleter deleter) : block(new control_block_standalone(data, deleter)), data(data) {
+    shared_pointer(element_type* data, Deleter deleter) : block(new control_block_standalone<T, Deleter>(data, deleter)), data(data) {
     }
 
     shared_pointer(const shared_pointer& other) noexcept : block(other.block), data(other.data) {
@@ -114,16 +129,23 @@ public:
         return *this;
     }
 
+    template <typename U = T, typename std::enable_if<!std::is_array<U>::value, int>::type = 0>
     T& operator*() const noexcept {
         return *data;
     }
 
+    template <typename U = T, typename std::enable_if<!std::is_array<U>::value, int>::type = 0>
     T* operator->() const noexcept {
         return data;
     }
 
-    T* get() const noexcept {
+    element_type* get() const noexcept {
         return data;
+    }
+
+    template <typename U = T, typename std::enable_if<std::is_array<U>::value, int>::type = 0>
+    element_type& operator[](const std::size_t index) {
+        return data[index];
     }
 
     long use_count() const noexcept {
@@ -144,7 +166,7 @@ public:
         data = nullptr;
     }
 
-    void reset(T* new_data) {
+    void reset(element_type* new_data) {
         check_and_release_ownership();
         block = new control_block();
         data = new_data;
@@ -186,7 +208,7 @@ private:
     }
 
     control_block* block;
-    T* data;
+    element_type* data;
 };
 
 template <typename T, typename... Args>

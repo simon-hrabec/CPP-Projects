@@ -1,4 +1,3 @@
-
 # Shared Pointer
 If I need to have shared ownership in my C++ code, I can use a shared pointer. C++11 introduced `std::shared_ptr<T>` smart pointer, which is now part of the standard library. Therefore, there is no need to reimplement it (reinvent the wheel). Unless... you want to have some fun or see it as a learning experience and entertaining exercise. On this page I will show several iterations of shared pointer implementation from the most basic one to (ideally/eventually) a full version that supports all the features like the standard one. I intend to have this page also as a learning resource. 
 
@@ -58,6 +57,18 @@ Both `std::shared_ptr`  and `std::unique_ptr` have the option to create the owne
             delete data_pointer;
         }
     };
+
+### Version 8 - Array support
+Prior to C++17 `std::shared_ptr` did not have native support for array types. This changed with C++17, where a shared pointer can be of types such as `int[]` or `int[24]`. Supporting arrays some with its caveats:
+
+ - Instead of `T`, we now need to differentiate between `T` and `element_type`. E.g. when having a `shared_pointer<int[24]>`, the pointer instance needs to hold a data pointer to `int`, not to `int[24]`.
+ - The default deleter now needs to do `delete data` or `delete [] data` based on whether T is an array type.
+ - `shared_pointer` and `control_block_standalone` have a pointer to `elementy_type`, but `control_block_with_object` has a T member variable, hence we need to cover those differences (at compile-time via template metaprogramming).
+ - The `operator[]` is defined only for array types, whereas `operator*` and `operator->` are defined non non-array types.
+
+Besides that, with support for array types, there is a number of `make_shared` overloads plus an additional function `make_shared_for_overwrite`. These cover different cases of value initialization and default initialization and are out of scope of this version.
+
+An "easy" way to have conditional existence of the operators is to use `enable_if`. However, this will cause longer error messages when trying to use a method that should not be present for a specific instantiation of the `shared_pointer` template. The standard library implementation does not provide those error messages. They use a bit different approach - they define a class with different specializations, each having the desired operators. And then they let the shared_pointer class inherit from it. If you are curious how the operators are implemented, if they do not have access to the data (since they are defined in the shared_pointer class), they just use a cast - `static_cast<shared_pointer*>(this)`.
 
 ## Aditional links and resources
  - Spaceship operator: [CppCon 2019: Jonathan Müller "Using C++20's Three-way Comparison <=>"](https://www.youtube.com/watch?v=8jNXy3K2Wpk)
