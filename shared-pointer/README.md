@@ -62,8 +62,8 @@ Both `std::shared_ptr`  and `std::unique_ptr` have the option to create the owne
 Prior to C++17 `std::shared_ptr` did not have native support for array types. This changed with C++17, where a shared pointer can be of types such as `int[]` or `int[24]`. Supporting arrays some with its caveats:
 
  - Instead of `T`, we now need to differentiate between `T` and `element_type`. E.g. when having a `shared_pointer<int[24]>`, the pointer instance needs to hold a data pointer to `int`, not to `int[24]`.
- - The default deleter now needs to do `delete data` or `delete [] data` based on whether T is an array type.
- - `shared_pointer` and `control_block_standalone` have a pointer to `elementy_type`, but `control_block_with_object` has a T member variable, hence we need to cover those differences (at compile-time via template metaprogramming).
+ - The default deleter now needs to do `delete data` or `delete [] data` based on whether `T` is an array type.
+ - `shared_pointer` and `control_block_standalone` have a pointer to `elementy_type`, but `control_block_with_object` has a `T` member variable, hence we need to cover those differences (at compile-time via template metaprogramming).
  - The `operator[]` is defined only for array types, whereas `operator*` and `operator->` are defined non non-array types.
 
 Besides that, with support for array types, there is a number of `make_shared` overloads plus an additional function `make_shared_for_overwrite`. These cover different cases of value initialization and default initialization and are out of scope of this version.
